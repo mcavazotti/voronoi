@@ -1,6 +1,10 @@
 #ifndef POINT_H
 #define POINT_H
 
+#include <set>
+
+class HalfEdge;
+
 /**
  * This class represents of a point.
 */
@@ -14,6 +18,16 @@ public:
   Point(int a1, int a2, int idx) : x(a1), y(a2), id(idx) {}
 
   int getId() const { return id; }
+
+  void insertIncidentEdge(HalfEdge *e) {
+    incidentEdges.insert(e);
+  }
+  void removeIncidentEdge(HalfEdge *e) {
+    auto tmp = incidentEdges.find(e);
+    if(tmp != incidentEdges.end()) {
+      incidentEdges.erase(tmp);
+    }
+  }
 
   bool operator==(const Point &p) const
   {
@@ -63,6 +77,7 @@ public:
   int x, y;
 
 private:
+  std::set<HalfEdge *> incidentEdges;
   int id;
 };
 
