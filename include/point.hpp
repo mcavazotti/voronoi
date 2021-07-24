@@ -22,7 +22,7 @@ public:
   template <typename U>
   operator Point<U>()
   {
-    return Point<U>(static_cast<U>(this->x, this->y, this->id));
+    return Point<U>(static_cast<U>(this->x), static_cast<U>(this->y), this->id);
   }
 
   int getId() const { return id; }
