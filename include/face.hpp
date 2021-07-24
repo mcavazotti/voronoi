@@ -3,6 +3,7 @@
 #define FACE_H
 #include "halfEdge.hpp"
 
+template <typename T>
 class HalfEdge;
 
 /**
@@ -10,21 +11,22 @@ class HalfEdge;
  * 
  * It has an internal counter and a static array that stores every Face instance
 */
+template <typename T>
 class Face
 {
 public:
   Face() : eC(nullptr) {}
 
-  HalfEdge *edgeChain() const { return eC; }
+  HalfEdge<T> *edgeChain() const { return eC; }
 
-  void setChain(HalfEdge *e)
+  void setChain(HalfEdge<T> *e)
   {
     eC = e;
   }
 
   int getFaceSize()
   {
-    HalfEdge *tmp = eC;
+    HalfEdge<T> *tmp = eC;
     int numPoints = 0;
 
     do
@@ -37,7 +39,7 @@ public:
 
 public:
 private:
-  HalfEdge *eC;
+  HalfEdge<T> *eC;
 };
 
 #endif

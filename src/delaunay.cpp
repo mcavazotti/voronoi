@@ -1,5 +1,5 @@
 #include "../include/delaunay.hpp"
-#include "../include/delaunayFunctions.hpp"
+#include "../include/geometricFunctions.hpp"
 #include "../include/utils.hpp"
 #include "../include/ioFunctions.hpp"
 #include <iostream>
@@ -19,10 +19,10 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
   auto left = new PointInt(meanX - meanDelta * 5, meanY - meanDelta * 5);
   auto right = new PointInt(meanX + meanDelta * 5, meanY - meanDelta * 5);
 
-  auto face = new Face();
+  auto face = new Face<int>();
 
-  auto edge = createEdgeP2P(top, right, nullptr, face);
-  auto tmpEdge = createEdgeP2P(right, left, nullptr, face);
+  auto edge = createEdgeP2P<int>(top, right, nullptr, face);
+  auto tmpEdge = createEdgeP2P<int>(right, left, nullptr, face);
 
   // tie pointers together: first and second edges
   edge->setNext(tmpEdge);
@@ -31,7 +31,7 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
   tmpEdge->twin()->setNext(edge->twin());
 
   edge = tmpEdge;
-  tmpEdge = createEdgeP2P(left, top, nullptr, face);
+  tmpEdge = createEdgeP2P<int>(left, top, nullptr, face);
 
   // tie pointers together: second and third edges
   edge->setNext(tmpEdge);
@@ -57,9 +57,9 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
 
 void Delaunay::triangulate()
 {
-  HalfEdge *edge, *tmpEdge, *newEdge1, *newEdge2;
-  Face *tmpFace;
-  edgeVector tmpEdgeVector;
+  HalfEdge<int> *edge, *tmpEdge, *newEdge1, *newEdge2;
+  Face<int> *tmpFace;
+  std::vector<HalfEdge<int> *> tmpEdgeVector;
   for (auto &p : points)
   {
     auto face = findTriangle(p, &edge);
@@ -87,14 +87,14 @@ void Delaunay::triangulate()
       newEdge1->setPrev(newEdge2->twin());
       newEdge2->twin()->setNext(newEdge1);
 
-      tmpFace = new Face();
+      tmpFace = new Face<int>();
       setFace(newEdge1, tmpFace);
       faces.insert(tmpFace);
 
       newEdge2->next()->next()->setNext(newEdge2);
       newEdge2->setPrev(newEdge2->next()->next());
 
-      tmpFace = new Face();
+      tmpFace = new Face<int>();
       setFace(newEdge2, tmpFace);
       faces.insert(tmpFace);
     }
@@ -113,7 +113,7 @@ void Delaunay::triangulate()
     computationPoints.push_back(p);
 
     // legalize edges
-    tmpEdgeVector = edgeVector(p->incidentEdges.begin(), p->incidentEdges.end());
+    tmpEdgeVector = std::vector<HalfEdge<int> *>(p->incidentEdges.begin(), p->incidentEdges.end());
     for (auto &e : tmpEdgeVector)
     {
       legalizeEdge(p, e->next());
@@ -135,7 +135,7 @@ void Delaunay::triangulate()
  * 
  * If the point is on an edge, [onEdge] is set to that edge.
  */
-Face *Delaunay::findTriangle(PointInt *p, HalfEdge **onEdge)
+Face<int> *Delaunay::findTriangle(PointInt *p, HalfEdge<int> **onEdge)
 {
   double l1, l2, l3, det;
   PointInt *p1, *p2, *p3;
@@ -180,8 +180,8 @@ void Delaunay::removeVertex(PointInt *p)
 {
 
 
-  HalfEdge *tmpEdge, *twin;
-  Face *discartedFace, *tmpFace;
+  HalfEdge<int> *tmpEdge, *twin;
+  Face<int> *discartedFace, *tmpFace;
   while (!p->incidentEdges.empty())
   {
     tmpEdge = *(p->incidentEdges.begin());

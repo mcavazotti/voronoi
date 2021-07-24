@@ -37,7 +37,7 @@ private:
 
   // auxiliary methods
   void prepareTriangulation(int minX, int maxX, int minY, int maxY);
-  Face *findTriangle(PointInt *p, HalfEdge **onEdge);
+  Face<int> *findTriangle(PointInt *p, HalfEdge<int> **onEdge);
 
   /**
   * Remove vertex and rearrange DCEL around it.
@@ -46,7 +46,7 @@ private:
 
 public:
   pointIntVector points;
-  std::set<Face *> faces;
+  std::set<Face<int> *> faces;
 
 private:
   std::deque<PointInt *> computationPoints;

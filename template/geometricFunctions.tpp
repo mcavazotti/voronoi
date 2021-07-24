@@ -1,12 +1,16 @@
-#include "../include/delaunayFunctions.hpp"
+#ifndef GEOMETRIC_FUNC_T
+#define GEOMETRIC_FUNC_T
+
+#include "../include/geometricFunctions.hpp"
 #include <iostream>
 
-HalfEdge *createEdgeP2P(PointInt *from, PointInt *to, Face *leftFace, Face *rightFace)
+template <typename T>
+HalfEdge<T> *createEdgeP2P(Point<T> *from, Point<T> *to, Face<T> *leftFace, Face<T> *rightFace)
 {
-  auto edge = new HalfEdge(from, to);
+  auto edge = new HalfEdge<T>(from, to);
   from->insertIncidentEdge(edge);
 
-  auto twin = new HalfEdge(to, from, nullptr, nullptr, edge);
+  auto twin = new HalfEdge<T>(to, from, nullptr, nullptr, edge);
   to->insertIncidentEdge(twin);
   twin->setFace(leftFace);
 
@@ -16,12 +20,13 @@ HalfEdge *createEdgeP2P(PointInt *from, PointInt *to, Face *leftFace, Face *righ
   return edge;
 }
 
-HalfEdge *createEdgeP2E(PointInt *from, HalfEdge *toEdge)
+template <typename T>
+HalfEdge<T> *createEdgeP2E(Point<T> *from, HalfEdge<T> *toEdge)
 {
-  auto edge = new HalfEdge(from, toEdge->from(), nullptr, toEdge, nullptr);
+  auto edge = new HalfEdge<T>(from, toEdge->from(), nullptr, toEdge, nullptr);
   from->insertIncidentEdge(edge);
 
-  auto twin = new HalfEdge(toEdge->from(), from, toEdge->prev(), nullptr, edge);
+  auto twin = new HalfEdge<T>(toEdge->from(), from, toEdge->prev(), nullptr, edge);
   toEdge->from()->insertIncidentEdge(twin);
   edge->setTwin(twin);
 
@@ -31,9 +36,10 @@ HalfEdge *createEdgeP2E(PointInt *from, HalfEdge *toEdge)
   return edge;
 }
 
-void setFace(HalfEdge *edgeChain, Face *face)
+template <typename T>
+void setFace(HalfEdge<T> *edgeChain, Face<T> *face)
 {
-  HalfEdge *tmp, *highest;
+  HalfEdge<T> *tmp, *highest;
 
   tmp = edgeChain;
   highest = edgeChain;
@@ -49,12 +55,13 @@ void setFace(HalfEdge *edgeChain, Face *face)
     face->setChain(highest);
 }
 
-void insertPointInEdge(PointInt *p, HalfEdge *edge)
+template <typename T>
+void insertPointInEdge(Point<T> *p, HalfEdge<T> *edge)
 {
-  HalfEdge *tmp1 = new HalfEdge(p, edge->to(), edge, edge->next(), nullptr);
+  HalfEdge<T> *tmp1 = new HalfEdge<T>(p, edge->to(), edge, edge->next(), nullptr);
   tmp1->setFace(edge->face());
   p->insertIncidentEdge(tmp1);
-  HalfEdge *tmp2 = new HalfEdge(p, edge->from(), edge->twin(), edge->twin()->next(), edge);
+  HalfEdge<T> *tmp2 = new HalfEdge<T>(p, edge->from(), edge->twin(), edge->twin()->next(), edge);
   tmp2->setFace(edge->twin()->face());
   p->insertIncidentEdge(tmp2);
 
@@ -74,12 +81,13 @@ void insertPointInEdge(PointInt *p, HalfEdge *edge)
   edge->setTwin(tmp2);
 }
 
-Face *insertDiagonal(HalfEdge *fromEdge, HalfEdge *toEdge)
+template <typename T>
+Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge)
 {
   // Create diagonal and its twin
-  auto diagonal = new HalfEdge(toEdge->from(), fromEdge->from(), toEdge->prev(), fromEdge, nullptr);
+  auto diagonal = new HalfEdge<T>(toEdge->from(), fromEdge->from(), toEdge->prev(), fromEdge, nullptr);
   toEdge->from()->insertIncidentEdge(diagonal);
-  auto diagonalTwin = new HalfEdge(fromEdge->from(), toEdge->from(), fromEdge->prev(), toEdge, diagonal);
+  auto diagonalTwin = new HalfEdge<T>(fromEdge->from(), toEdge->from(), fromEdge->prev(), toEdge, diagonal);
   fromEdge->from()->insertIncidentEdge(diagonalTwin);
 
   // Update edge chain
@@ -90,7 +98,7 @@ Face *insertDiagonal(HalfEdge *fromEdge, HalfEdge *toEdge)
   toEdge->setPrev(diagonalTwin);
   fromEdge->setPrev(diagonal);
 
-  auto face = new Face();
+  auto face = new Face<T>();
 
   // Update face
   setFace(diagonal, fromEdge->face());
@@ -99,7 +107,8 @@ Face *insertDiagonal(HalfEdge *fromEdge, HalfEdge *toEdge)
   return face;
 }
 
-void legalizeEdge(PointInt *p, HalfEdge *edge)
+template <typename T>
+void legalizeEdge(Point<T> *p, HalfEdge<T> *edge)
 {
   auto twin = edge->twin();
   if (twin->face() != nullptr)
@@ -149,3 +158,4 @@ void legalizeEdge(PointInt *p, HalfEdge *edge)
     }
   }
 }
+#endif

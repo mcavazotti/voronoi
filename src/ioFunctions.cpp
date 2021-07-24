@@ -17,7 +17,7 @@ void readPoints(std::vector<PointInt *> &sites)
 
 void printDelaunay(Delaunay const &del)
 {
-  edgeVector edges;
+  std::vector<HalfEdge<int> *> edges;
   std::cout << del.computationPoints.size() << "\n";
   for (auto const &p : del.computationPoints)
   {
@@ -39,9 +39,9 @@ void printDelaunay(Delaunay const &del)
 void delaunayDebug(Delaunay const &del)
 {
   fprintf(stderr, "DEBUGING FACES\n\n");
-  fprintf(stderr, "num faces: %d\n\n", del.faces.size());
+  fprintf(stderr, "num faces: %ld\n\n", del.faces.size());
   int i = 0;
-  HalfEdge *tmp, *first;
+  HalfEdge<int> *tmp, *first;
   for (auto const &face : del.faces)
   {
     fprintf(stderr, "face #%d\n", i++);
@@ -54,6 +54,6 @@ void delaunayDebug(Delaunay const &del)
       fprintf(stderr, " -> (%d,%d)", tmp->from()->x, tmp->from()->y);
       tmp = tmp->next();
     }
-    fprintf(stderr,"\n");
+    fprintf(stderr, "\n");
   }
 }

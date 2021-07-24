@@ -42,7 +42,5 @@ template<typename T> Point<T> computeCircuncenter(Point<T> const &p1, Point<T> c
 template<typename T> double computeDistance(Point<T> const &a, Point<T> const &b);
 
 typedef std::vector <PointInt *> pointIntVector;
-typedef std::vector <HalfEdge *> edgeVector;
-typedef std::vector <Face *> faceVector;
 
 #endif

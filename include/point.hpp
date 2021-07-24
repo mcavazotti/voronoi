@@ -3,6 +3,7 @@
 
 #include <set>
 
+template<typename T>
 class HalfEdge;
 
 /**
@@ -27,11 +28,11 @@ public:
 
   int getId() const { return id; }
 
-  void insertIncidentEdge(HalfEdge *e)
+  void insertIncidentEdge(HalfEdge<T> *e)
   {
     incidentEdges.insert(e);
   }
-  void removeIncidentEdge(HalfEdge *e)
+  void removeIncidentEdge(HalfEdge<T> *e)
   {
     auto tmp = incidentEdges.find(e);
     if (tmp != incidentEdges.end())
@@ -86,7 +87,7 @@ public:
 
 public:
   T x, y;
-  std::set<HalfEdge *> incidentEdges;
+  std::set<HalfEdge<T> *> incidentEdges;
 
 private:
   int id;
