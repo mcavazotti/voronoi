@@ -1,7 +1,8 @@
 #ifndef DELAUNAY_H
 #define DELAUNAY_H
 
-#include <vector>
+#include <set>
+#include <deque>
 #include <limits>
 #include "point.hpp"
 #include "utils.hpp"
@@ -29,6 +30,8 @@ public:
     triangulate();
   }
 
+  friend void printDelaunay(Delaunay const &del);
+
 private:
   void triangulate();
 
@@ -36,11 +39,16 @@ private:
   void prepareTriangulation(int minX, int maxX, int minY, int maxY);
   Face *findTriangle(PointInt *p, HalfEdge **onEdge);
 
+  /**
+  * Remove vertex and rearrange DCEL around it.
+  */
+  void removeVertex(PointInt *p);
+
 public:
   pointIntVector points;
-  faceVector faces;
+  std::set<Face *> faces;
 
 private:
-  pointIntVector computationPoints;
+  std::deque<PointInt *> computationPoints;
 };
 #endif

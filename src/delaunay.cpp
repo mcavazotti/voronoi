@@ -1,6 +1,7 @@
 #include "../include/delaunay.hpp"
 #include "../include/delaunayFunctions.hpp"
 #include "../include/utils.hpp"
+#include "../include/ioFunctions.hpp"
 #include <iostream>
 
 /**
@@ -47,7 +48,7 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
 
   // point to edge leaving topmost vertex
   face->setChain(tmpEdge->next());
-  faces.push_back(face);
+  faces.insert(face);
 
   computationPoints.push_back(top);
   computationPoints.push_back(right);
@@ -61,7 +62,6 @@ void Delaunay::triangulate()
   edgeVector tmpEdgeVector;
   for (auto &p : points)
   {
-    std::cerr << "Inserting point: (" << p->x << "," << p->y << ")\n";
     auto face = findTriangle(p, &edge);
     if (face == nullptr)
     {
@@ -89,14 +89,14 @@ void Delaunay::triangulate()
 
       tmpFace = new Face();
       setFace(newEdge1, tmpFace);
-      faces.push_back(tmpFace);
+      faces.insert(tmpFace);
 
       newEdge2->next()->next()->setNext(newEdge2);
       newEdge2->setPrev(newEdge2->next()->next());
 
       tmpFace = new Face();
       setFace(newEdge2, tmpFace);
-      faces.push_back(tmpFace);
+      faces.insert(tmpFace);
     }
     else
     {
@@ -104,13 +104,13 @@ void Delaunay::triangulate()
       insertPointInEdge(p, edge);
 
       tmpFace = insertDiagonal(edge->prev(), edge->next());
-      faces.push_back(tmpFace);
+      faces.insert(tmpFace);
 
       tmpFace = insertDiagonal(tmpEdge->prev(), tmpEdge->next());
-      faces.push_back(tmpFace);
+      faces.insert(tmpFace);
     }
 
-    points.push_back(p);
+    computationPoints.push_back(p);
 
     // legalize edges
     tmpEdgeVector = edgeVector(p->incidentEdges.begin(), p->incidentEdges.end());
@@ -118,6 +118,15 @@ void Delaunay::triangulate()
     {
       legalizeEdge(p, e->next());
     }
+  }
+
+  // remove bounding vertices
+  PointInt *tmpPoint;
+  while (!computationPoints.empty() && computationPoints.front()->getId() < 0)
+  {
+    tmpPoint = computationPoints.front();
+    computationPoints.pop_front();
+    removeVertex(tmpPoint);
   }
 }
 
@@ -143,6 +152,8 @@ Face *Delaunay::findTriangle(PointInt *p, HalfEdge **onEdge)
     l2 = ((p3->y - p1->y) * (p->x - p3->x) + (p1->x - p3->x) * (p->y - p3->y)) / det;
     l3 = 1 - l1 - l2;
 
+    *onEdge = nullptr;
+
     if (compareDoubleEqual(l1, 0.0))
     {
       *onEdge = f->edgeChain()->next();
@@ -158,10 +169,49 @@ Face *Delaunay::findTriangle(PointInt *p, HalfEdge **onEdge)
 
     if (l1 >= 0 && l2 >= 0 && l3 >= 0)
     {
-      *onEdge = nullptr;
       return f;
     }
   }
   *onEdge = nullptr;
   return nullptr;
+}
+
+void Delaunay::removeVertex(PointInt *p)
+{
+
+
+  HalfEdge *tmpEdge, *twin;
+  Face *discartedFace, *tmpFace;
+  while (!p->incidentEdges.empty())
+  {
+    tmpEdge = *(p->incidentEdges.begin());
+    p->incidentEdges.erase(p->incidentEdges.begin());
+
+    twin = tmpEdge->twin();
+    twin->from()->removeIncidentEdge(twin);
+
+    tmpEdge->next()->setPrev(twin->prev());
+    twin->prev()->setNext(tmpEdge->next());
+
+    tmpEdge->prev()->setNext(twin->next());
+    twin->next()->setPrev(tmpEdge->prev());
+
+    if (tmpEdge->face() == nullptr)
+    {
+      tmpFace = tmpEdge->face();
+      discartedFace = twin->face();
+    }
+    else
+    {
+      tmpFace = twin->face();
+      discartedFace = tmpEdge->face();
+    }
+    setFace(tmpEdge->next(), tmpFace);
+
+    faces.erase(discartedFace);
+    delete discartedFace;
+    delete tmpEdge;
+    delete twin;
+  }
+  delete p;
 }

@@ -34,4 +34,9 @@ Face * insertDiagonal(HalfEdge *fromEdge, HalfEdge *toEdge);
 
 void legalizeEdge(PointInt *p, HalfEdge *edge);
 
+/**
+ * Remove vertex and rearrange DCEL around it.
+ */
+void removeVertex(PointInt *p);
+
 #endif

@@ -1,4 +1,5 @@
 #include "../include/delaunayFunctions.hpp"
+#include <iostream>
 
 HalfEdge *createEdgeP2P(PointInt *from, PointInt *to, Face *leftFace, Face *rightFace)
 {
@@ -21,7 +22,7 @@ HalfEdge *createEdgeP2E(PointInt *from, HalfEdge *toEdge)
   from->insertIncidentEdge(edge);
 
   auto twin = new HalfEdge(toEdge->from(), from, toEdge->prev(), nullptr, edge);
-  toEdge->from()->insertIncidentEdge(edge);
+  toEdge->from()->insertIncidentEdge(twin);
   edge->setTwin(twin);
 
   toEdge->prev()->setNext(twin);
@@ -56,6 +57,9 @@ void insertPointInEdge(PointInt *p, HalfEdge *edge)
   HalfEdge *tmp2 = new HalfEdge(p, edge->from(), edge->twin(), edge->twin()->next(), edge);
   tmp2->setFace(edge->twin()->face());
   p->insertIncidentEdge(tmp2);
+
+  edge->setTo(p);
+  edge->twin()->setTo(p);
 
   tmp1->setTwin(edge->twin());
   tmp2->setTwin(edge);
@@ -97,16 +101,51 @@ Face *insertDiagonal(HalfEdge *fromEdge, HalfEdge *toEdge)
 
 void legalizeEdge(PointInt *p, HalfEdge *edge)
 {
-  if (edge->twin()->face() != nullptr)
+  auto twin = edge->twin();
+  if (twin->face() != nullptr)
   {
     PointDouble pd = computeCircuncenter(PointDouble(*p), PointDouble(*(edge->from())), PointDouble(*(edge->to())));
 
     double r = computeDistance(pd, PointDouble(*p));
-    double dist = computeDistance(pd, PointDouble(*(edge->twin()->next()->to())));
+    double dist = computeDistance(pd, PointDouble(*(twin->next()->to())));
 
-    if(dist < r) {
-      /* flip edge */
+    if (dist < r)
+    {
+      // flip edge
+      edge->from()->removeIncidentEdge(edge);
+      edge->to()->removeIncidentEdge(twin);
+
+      edge->next()->setPrev(twin->prev());
+      twin->prev()->setNext(edge->next());
+
+      edge->prev()->setNext(twin->next());
+      twin->next()->setPrev(edge->prev());
+
+      edge->setFrom(twin->next()->to());
+      edge->from()->insertIncidentEdge(edge);
+      twin->setTo(edge->from());
+
+      twin->setFrom(edge->next()->to());
+      twin->from()->insertIncidentEdge(twin);
+      edge->setTo(twin->from());
+
+      edge->setPrev(twin->next());
+      edge->prev()->setNext(edge);
+
+      twin->setPrev(edge->next());
+      twin->prev()->setNext(twin);
+
+      edge->setNext(edge->prev()->prev());
+      edge->next()->setPrev(edge);
+
+      twin->setNext(twin->prev()->prev());
+      twin->next()->setPrev(twin);
+
+      setFace(edge, edge->face());
+      setFace(twin, twin->face());
+
+      legalizeEdge(p, edge->prev());
+      legalizeEdge(p, twin->next());
     }
-
   }
 }

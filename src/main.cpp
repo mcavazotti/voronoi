@@ -4,12 +4,13 @@
 #include "../include/utils.hpp"
 #include <vector>
 
-int main() {
+int main()
+{
   pointIntVector sites;
   readPoints(sites);
   Delaunay delaunay(sites);
   // Voronoi vor(sites);
-    
 
+  
   return 0;
 }
