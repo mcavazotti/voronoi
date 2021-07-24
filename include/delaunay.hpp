@@ -9,7 +9,7 @@
 class Delaunay
 {
 public:
-  Delaunay(std::vector<Point *> &p)
+  Delaunay(std::vector<PointInt *> &p)
   {
     int maxX = std::numeric_limits<int>::min();
     int minX = std::numeric_limits<int>::max();
@@ -34,13 +34,13 @@ private:
 
   // auxiliary methods
   void prepareTriangulation(int minX, int maxX, int minY, int maxY);
-  Face *findTriangle(Point *p);
+  Face *findTriangle(PointInt *p, HalfEdge **onEdge);
 
 public:
-  pointVector points;
+  pointIntVector points;
   faceVector faces;
 
 private:
-  pointVector computationPoints;
+  pointIntVector computationPoints;
 };
 #endif

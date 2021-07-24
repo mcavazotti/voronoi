@@ -8,6 +8,8 @@
 #include "face.hpp"
 // #include "event.hpp"
 
+#define EPSILON 0.0001
+
 // class eventComparison
 // {
 //   bool reverse;
@@ -28,7 +30,18 @@
 
 // typedef std::priority_queue<GenericEvent *, std::vector<GenericEvent *>, eventComparison> EventQueue;
 
-typedef std::vector <Point *> pointVector;
+/**
+ * Compare if two doubles are equal considering an epsilon.
+ * 
+ * Code taken from https://stackoverflow.com/questions/17333/what-is-the-most-effective-way-for-float-and-double-comparison
+ */
+bool compareDoubleEqual(double a, double b);
+
+template<typename T> Point<T> computeCircuncenter(Point<T> const &p1, Point<T> const &p2, Point<T> const &p3);
+
+template<typename T> double computeDistance(Point<T> const &a, Point<T> const &b);
+
+typedef std::vector <PointInt *> pointIntVector;
 typedef std::vector <HalfEdge *> edgeVector;
 typedef std::vector <Face *> faceVector;
 

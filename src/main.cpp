@@ -5,7 +5,7 @@
 #include <vector>
 
 int main() {
-  pointVector sites;
+  pointIntVector sites;
   readPoints(sites);
   Delaunay delaunay(sites);
   // Voronoi vor(sites);

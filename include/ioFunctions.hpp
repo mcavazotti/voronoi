@@ -4,6 +4,6 @@
 #include <vector>
 #include "point.hpp"
 
-void readPoints(std::vector<Point *> &sites);
+void readPoints(std::vector<PointInt *> &sites);
 
 #endif

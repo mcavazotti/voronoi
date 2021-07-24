@@ -8,10 +8,10 @@ class Voronoi
 {
 public:
   Voronoi() {}
-  Voronoi(std::vector<Point *> points);
+  Voronoi(std::vector<PointInt *> points);
 
 public:
-  std::vector<Point *> sites;
+  std::vector<PointInt *> sites;
 };
 
 #endif
