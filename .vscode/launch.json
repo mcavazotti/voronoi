@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/voronoi",
             "args": [
                 "<",
-                "testes/teste1.txt"
+                "testes/hexagon_in.txt"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
