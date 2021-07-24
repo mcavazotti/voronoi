@@ -12,10 +12,11 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
   int deltaY = (maxY - minY);
   int meanX = deltaX / 2;
   int meanY = deltaY / 2;
+  int meanDelta = (deltaX + deltaY) / 2;
 
-  auto top = new PointInt(meanX, meanY + deltaY * 10);
-  auto left = new PointInt(meanX - deltaX * 5, meanY - deltaY * 5);
-  auto right = new PointInt(meanX + deltaX * 5, meanY - deltaY * 5);
+  auto top = new PointInt(meanX, meanY + meanDelta * 10);
+  auto left = new PointInt(meanX - meanDelta * 5, meanY - meanDelta * 5);
+  auto right = new PointInt(meanX + meanDelta * 5, meanY - meanDelta * 5);
 
   auto face = new Face();
 
