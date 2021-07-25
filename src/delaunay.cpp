@@ -21,8 +21,8 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
 
   auto face = new Face<int>();
 
-  auto edge = createEdgeP2P<int>(top, right, nullptr, face);
-  auto tmpEdge = createEdgeP2P<int>(right, left, nullptr, face);
+  auto edge = geo::createEdgeP2P<int>(top, right, nullptr, face);
+  auto tmpEdge = geo::createEdgeP2P<int>(right, left, nullptr, face);
 
   // tie pointers together: first and second edges
   edge->setNext(tmpEdge);
@@ -31,7 +31,7 @@ void Delaunay::prepareTriangulation(int minX, int maxX, int minY, int maxY)
   tmpEdge->twin()->setNext(edge->twin());
 
   edge = tmpEdge;
-  tmpEdge = createEdgeP2P<int>(left, top, nullptr, face);
+  tmpEdge = geo::createEdgeP2P<int>(left, top, nullptr, face);
 
   // tie pointers together: second and third edges
   edge->setNext(tmpEdge);
@@ -72,41 +72,41 @@ void Delaunay::triangulate()
     // Point inside triangle
     if (edge == nullptr)
     {
-      newEdge1 = createEdgeP2E(p, face->edgeChain());
+      newEdge1 = geo::createEdgeP2E(p, face->edgeChain());
       tmpEdge = face->edgeChain()->next();
-      newEdge2 = createEdgeP2E(p, tmpEdge);
+      newEdge2 = geo::createEdgeP2E(p, tmpEdge);
 
       newEdge1->setPrev(newEdge2->twin());
       newEdge2->twin()->setNext(newEdge1);
-      setFace(newEdge1, face);
+      geo::setFace(newEdge1, face);
 
       newEdge1 = newEdge2;
 
-      newEdge2 = createEdgeP2E(p, tmpEdge->next());
+      newEdge2 = geo::createEdgeP2E(p, tmpEdge->next());
 
       newEdge1->setPrev(newEdge2->twin());
       newEdge2->twin()->setNext(newEdge1);
 
       tmpFace = new Face<int>();
-      setFace(newEdge1, tmpFace);
+      geo::setFace(newEdge1, tmpFace);
       faces.insert(tmpFace);
 
       newEdge2->next()->next()->setNext(newEdge2);
       newEdge2->setPrev(newEdge2->next()->next());
 
       tmpFace = new Face<int>();
-      setFace(newEdge2, tmpFace);
+      geo::setFace(newEdge2, tmpFace);
       faces.insert(tmpFace);
     }
     else
     {
       tmpEdge = edge->twin();
-      insertPointInEdge(p, edge);
+      geo::insertPointInEdge(p, edge);
 
-      tmpFace = insertDiagonal(edge->prev(), edge->next());
+      tmpFace = geo::insertDiagonal(edge->prev(), edge->next());
       faces.insert(tmpFace);
 
-      tmpFace = insertDiagonal(tmpEdge->prev(), tmpEdge->next());
+      tmpFace = geo::insertDiagonal(tmpEdge->prev(), tmpEdge->next());
       faces.insert(tmpFace);
     }
 
@@ -116,7 +116,7 @@ void Delaunay::triangulate()
     tmpEdgeVector = std::vector<HalfEdge<int> *>(p->incidentEdges.begin(), p->incidentEdges.end());
     for (auto &e : tmpEdgeVector)
     {
-      legalizeEdge(p, e->next());
+      geo::legalizeEdge(p, e->next());
     }
   }
 
@@ -206,7 +206,7 @@ void Delaunay::removeVertex(PointInt *p)
       tmpFace = twin->face();
       discartedFace = tmpEdge->face();
     }
-    setFace(tmpEdge->next(), tmpFace);
+    geo::setFace(tmpEdge->next(), tmpFace);
 
     faces.erase(discartedFace);
     delete discartedFace;

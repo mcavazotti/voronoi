@@ -3,7 +3,7 @@
 
 #include <set>
 
-template<typename T>
+template <typename T>
 class HalfEdge;
 
 /**
@@ -41,17 +41,27 @@ public:
     }
   }
 
-  bool operator==(const Point &p) const
+  Point<T> operator+(const Point<T> &p)
+  {
+    return Point<T>(x + p.x, y + p.y);
+  }
+
+  Point<T> operator-(const Point<T> &p)
+  {
+    return Point<T>(x - p.x, y - p.y);
+  }
+
+  bool operator==(const Point<T> &p) const
   {
     return x == p.x && y == p.y;
   }
 
-  bool operator!=(const Point &p) const
+  bool operator!=(const Point<T> &p) const
   {
     return x != p.x && y != p.y;
   }
 
-  bool operator>(const Point &p) const
+  bool operator>(const Point<T> &p) const
   {
     if (y != p.y)
       return y > p.y;
@@ -59,7 +69,7 @@ public:
       return x < p.x;
   }
 
-  bool operator<(const Point &p) const
+  bool operator<(const Point<T> &p) const
   {
     if (y != p.y)
       return y < p.y;
@@ -67,17 +77,17 @@ public:
       return x > p.x;
   }
 
-  bool operator>=(const Point &p) const
+  bool operator>=(const Point<T> &p) const
   {
     return *this == p || *this > p;
   }
 
-  bool operator<=(const Point &p) const
+  bool operator<=(const Point<T> &p) const
   {
     return *this == p || *this < p;
   }
 
-  Point &operator=(const Point &p)
+  Point<T> &operator=(const Point<T> &p)
   {
     x = p.x;
     y = p.y;
