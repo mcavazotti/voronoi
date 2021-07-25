@@ -37,10 +37,6 @@
  */
 bool compareDoubleEqual(double a, double b);
 
-template<typename T> Point<T> computeCircuncenter(Point<T> const &p1, Point<T> const &p2, Point<T> const &p3);
-
-template<typename T> double computeDistance(Point<T> const &a, Point<T> const &b);
-
 typedef std::vector <PointInt *> pointIntVector;
 
 #endif
