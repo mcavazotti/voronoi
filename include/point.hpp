@@ -28,6 +28,9 @@ public:
 
   int getId() const { return id; }
 
+
+  void setId(int i) { id = i; }
+
   void insertIncidentEdge(HalfEdge<T> *e)
   {
     incidentEdges.insert(e);

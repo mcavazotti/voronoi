@@ -37,6 +37,27 @@
  */
 bool compareDoubleEqual(double a, double b);
 
-typedef std::vector <PointInt *> pointIntVector;
+bool compareDoublePointEqual(PointDouble const &a, PointDouble const &b);
 
+
+template<typename T>
+class PointPointerComparison
+{
+  bool reverse;
+
+public:
+  PointPointerComparison<T>(const bool &revparam = false)
+  {
+    reverse = revparam;
+  }
+  bool operator()(Point<T> *a, Point<T> *b) const
+  {
+    if (reverse)
+      return (*a) > (*b);
+    else
+      return (*a) < (*b);
+  }
+};
+
+typedef std::vector <PointInt *> pointIntVector;
 #endif

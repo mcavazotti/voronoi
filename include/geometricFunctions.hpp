@@ -5,6 +5,17 @@
 
 namespace geo
 {
+  enum class order
+  {
+    ascending,
+    descending
+  };
+
+  enum class axis
+  {
+    vertical,
+    horizontal
+  };
 
   /**
  * Create an edge, from a point to ("2") another point.
@@ -38,6 +49,9 @@ namespace geo
  */
   template <typename T>
   Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge);
+  
+  template <typename T>
+  Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge, HalfEdge<T> **newEdge);
 
   template <typename T>
   void legalizeEdge(Point<T> *p, HalfEdge<T> *edge);
@@ -53,10 +67,10 @@ namespace geo
 
   template <typename T>
   double computeDistance(Point<T> const &a, Point<T> const &b);
-}
 
-template <typename T>
-Point<T> computeNormal(HalfEdge<T> const &e);
+  template <typename T>
+  Point<double> computeUnitaryNormal(HalfEdge<T> const &e);
+}
 
 #include "../template/geometricFunctions.tpp"
 

@@ -2,6 +2,7 @@
 #include "../include/utils.hpp"
 #include "../include/geometricFunctions.hpp"
 #include <limits>
+#include <iostream>
 
 Voronoi::Voronoi(Delaunay const &del)
 {
@@ -18,6 +19,7 @@ Voronoi::Voronoi(Delaunay const &del)
     maxY = p->y > maxY ? p->y : maxY;
     minY = p->y < minY ? p->x : minY;
     sites.push_back(p);
+    sitesQueue.push(p);
   }
 
   boundaryMaxX = maxX + 5;
@@ -37,7 +39,7 @@ Voronoi::Voronoi(Delaunay const &del)
  * 1. For each triangle T in the Delaunay triangulation do:
  *    1.1 Compute circuncenter and store it in a map indexed by the face.
  *        If it is close enough to a neighbor's circuncenter, store neighbor's instead
- * 2. For each site S in the Delaunay triangulation do:
+ * 2. For each site S in the Delaunay triangulation  from top to bottom do:
  *    2.1 For each edge E incient do S do:
  *        2.1.1 Create an edge Ev for the diagram according to local conditions (neighboring faces and edges)
  *        
@@ -78,26 +80,33 @@ void Voronoi::buildDiagram(Delaunay const &del)
       if (circuncenterPtr == nullptr)
       {
         circuncenterPtr = new PointDouble(circuncenter.x, circuncenter.y);
+        diagramVertices.push_back(circuncenterPtr);
       }
 
       // insert circuncenter in the data structures
       triangleCircuncenters[f] = circuncenterPtr;
-      vertices.push_back(circuncenterPtr);
     }
   }
 
+  HalfEdge<double> *newEdge;
   // create edges
-  for (auto const &p : del.points)
+  do
   {
+    auto p = sitesQueue.top();
+    sitesQueue.pop();
+
     for (auto const &e : p->incidentEdges)
     {
       if (e->face() == nullptr && e->twin()->face() == nullptr)
       {
-        createInfiniteEdge(e);
+        if (edgeReference.count(e) <= 0)
+        {
+          newEdge = createInfiniteEdge(e);
+        }
       }
       else
       {
-        if (e->face() == nullptr)
+        /* if (e->face() == nullptr)
           createSemiInfiniteEdge(e);
         else if (e->twin() == nullptr)
           createSemiInfiniteEdge(e->twin());
@@ -111,27 +120,39 @@ void Voronoi::buildDiagram(Delaunay const &del)
           {
             createEdge(e);
           }
-        }
+        }*/
       }
+    }
+  } while (!sitesQueue.empty());
+
+  for (auto &p : sites)
+  {
+    for (auto &e : p->incidentEdges)
+    {
+      auto ref = edgeReference[e];
+      auto f = ref->face();
+      siteFaceReference[f] = p;
     }
   }
 }
 
 void Voronoi::prepareVoronoi()
 {
-  vertices.push_back(new PointDouble(boundaryMaxX, boundaryMaxY));
-  vertices.push_back(new PointDouble(boundaryMaxX, boundaryMinY));
-  vertices.push_back(new PointDouble(boundaryMinX, boundaryMinY));
-  vertices.push_back(new PointDouble(boundaryMinX, boundaryMaxY));
+  diagramVertices.push_back(new PointDouble(boundaryMaxX, boundaryMaxY));
+  diagramVertices.push_back(new PointDouble(boundaryMaxX, boundaryMinY));
+  diagramVertices.push_back(new PointDouble(boundaryMinX, boundaryMinY));
+  diagramVertices.push_back(new PointDouble(boundaryMinX, boundaryMaxY));
 
   auto face = new Face<double>();
+
   HalfEdge<double> *tmpEdge;
   HalfEdge<double> *prevEdge = nullptr;
   HalfEdge<double> *firstEdge = nullptr;
 
-  for (size_t i = 1; i < vertices.size(); i++)
+  for (size_t i = 1; i <= diagramVertices.size(); i++)
   {
-    tmpEdge = geo::createEdgeP2P<double>(vertices[i - 1], vertices[i], nullptr, face);
+    tmpEdge = geo::createEdgeP2P<double>(diagramVertices[i - 1], diagramVertices[i % diagramVertices.size()], nullptr, face);
+    cornerExternalBoundingEdge.push_back(tmpEdge->twin());
 
     if (firstEdge == nullptr)
     {
@@ -146,6 +167,7 @@ void Voronoi::prepareVoronoi()
       prevEdge->setNext(tmpEdge);
       prevEdge->twin()->setPrev(tmpEdge->twin());
     }
+    prevEdge = tmpEdge;
   }
 
   tmpEdge->setNext(firstEdge);
@@ -153,12 +175,66 @@ void Voronoi::prepareVoronoi()
 
   firstEdge->setPrev(tmpEdge);
   firstEdge->twin()->setNext(tmpEdge->twin());
+
+  geo::setFace(firstEdge, face);
+  diagramFaces.push_back(face);
 }
 
-void Voronoi::createInfiniteEdge(HalfEdge<int> *edge)
+HalfEdge<double> *Voronoi::findBoundingSegment(PointDouble const &p, corners corner, geo::axis axis, geo::order order)
 {
-  auto normal = PointDouble(geo::computeNormal(*edge));
+  double limitValue, fromCoord, toCoord;
+  double relevantPointCoord = axis == geo::axis::horizontal ? p.x : p.y;
+  auto tmpEdge = cornerExternalBoundingEdge[int(corner)];
+
+  if (axis == geo::axis::horizontal)
+  {
+    if (order == geo::order::ascending)
+      limitValue = boundaryMaxX;
+    else
+      limitValue = boundaryMinX;
+  }
+  else
+  {
+    if (order == geo::order::ascending)
+      limitValue = boundaryMaxY;
+    else
+      limitValue = boundaryMinY;
+  }
+  do
+  {
+    fromCoord = axis == geo::axis::horizontal ? tmpEdge->from()->x : tmpEdge->from()->y;
+    toCoord = axis == geo::axis::horizontal ? tmpEdge->prev()->from()->x : tmpEdge->prev()->from()->y;
+
+    if (compareDoubleEqual(fromCoord, relevantPointCoord))
+    {
+      return tmpEdge->prev()->twin();
+    }
+    if (order == geo::order::ascending ? relevantPointCoord < toCoord : relevantPointCoord > toCoord)
+    {
+      return tmpEdge->prev()->twin();
+    }
+    tmpEdge = tmpEdge->prev();
+
+  } while (order == geo::order::ascending ? fromCoord < limitValue : fromCoord > limitValue);
+
+  return nullptr;
+}
+
+struct _segmentRecord
+{
+  double t;
+  HalfEdge<double> *edge;
+};
+
+HalfEdge<double> *Voronoi::createInfiniteEdge(HalfEdge<int> *edge)
+{
+  auto normal = geo::computeUnitaryNormal(*edge);
   auto point = PointDouble(double(edge->from()->x + edge->to()->x) / 2.0, double(edge->from()->y + edge->to()->y) / 2.0);
+
+  std::vector<_segmentRecord> pointsOnBoundary;
+
+  HalfEdge<double> *tmpEdge;
+  PointDouble *tmpPoint;
 
   double t;
 
@@ -166,18 +242,62 @@ void Voronoi::createInfiniteEdge(HalfEdge<int> *edge)
   {
     // check against top boundary
     t = (boundaryMaxY - point.y) / normal.y;
+    auto xVal = (point.x + normal.x * t);
 
-    if ((point.x + normal.x * t) >= boundaryMinX && (point.x + normal.x * t) <= boundaryMaxX)
+    // x_min <= x < x_max
+    if (compareDoubleEqual(xVal, boundaryMinX) || (xVal > boundaryMinX && xVal < boundaryMaxX))
     {
-      /* create edge */
+      tmpPoint = new PointDouble(xVal, boundaryMaxY);
+      tmpEdge = findBoundingSegment(*tmpPoint, corners::top_left, geo::axis::horizontal, geo::order::ascending);
+      if (tmpEdge == nullptr)
+      {
+        std::cerr << "Calculations failed\n";
+        exit(-1);
+      }
+      else
+      {
+        if (compareDoublePointEqual(*tmpEdge->from(), *tmpPoint))
+        {
+          delete tmpPoint;
+          pointsOnBoundary.push_back({t, tmpEdge});
+        }
+        else
+        {
+          diagramVertices.push_back(tmpPoint);
+          geo::insertPointInEdge(tmpPoint, tmpEdge);
+          pointsOnBoundary.push_back({t, tmpEdge->next()});
+        }
+      }
     }
 
     // check against bottom boundary
     t = (boundaryMinY - point.y) / normal.y;
+    xVal = (point.x + normal.x * t);
 
-    if ((point.x + normal.x * t) >= boundaryMinX && (point.x + normal.x * t) <= boundaryMaxX)
+    // x_min < x <= x_max
+    if (compareDoubleEqual(xVal, boundaryMaxX) || (xVal > boundaryMinX && xVal < boundaryMaxX))
     {
-      /* create edge */
+      tmpPoint = new PointDouble(xVal, boundaryMinY);
+      tmpEdge = findBoundingSegment(*tmpPoint, corners::bottom_right, geo::axis::horizontal, geo::order::descending);
+      if (tmpEdge == nullptr)
+      {
+        std::cerr << "Calculations failed\n";
+        exit(-1);
+      }
+      else
+      {
+        if (compareDoublePointEqual(*tmpEdge->from(), *tmpPoint))
+        {
+          delete tmpPoint;
+          pointsOnBoundary.push_back({t, tmpEdge});
+        }
+        else
+        {
+          diagramVertices.push_back(tmpPoint);
+          geo::insertPointInEdge(tmpPoint, tmpEdge);
+          pointsOnBoundary.push_back({t, tmpEdge->next()});
+        }
+      }
     }
   }
 
@@ -185,18 +305,85 @@ void Voronoi::createInfiniteEdge(HalfEdge<int> *edge)
   {
     // check against left boundary
     t = (boundaryMinX - point.x) / normal.x;
+    auto yVal = (point.y + normal.y * t);
 
-    if ((point.y + normal.y * t) >= boundaryMinY && (point.y + normal.y * t) <= boundaryMaxY)
+    // y_min <= y < y_max
+    if (compareDoubleEqual(yVal, boundaryMinY) || (yVal > boundaryMinY && yVal < boundaryMaxY))
     {
-      /* create edge */
+      tmpPoint = new PointDouble(boundaryMinX, yVal);
+      tmpEdge = findBoundingSegment(*tmpPoint, corners::bottom_left, geo::axis::vertical, geo::order::ascending);
+      if (tmpEdge == nullptr)
+      {
+        std::cerr << "Calculations failed\n";
+        exit(-1);
+      }
+      else
+      {
+        if (compareDoublePointEqual(*tmpEdge->from(), *tmpPoint))
+        {
+          delete tmpPoint;
+          pointsOnBoundary.push_back({t, tmpEdge});
+        }
+        else
+        {
+          diagramVertices.push_back(tmpPoint);
+          geo::insertPointInEdge(tmpPoint, tmpEdge);
+          pointsOnBoundary.push_back({t, tmpEdge->next()});
+        }
+      }
     }
 
     // check against right boundary
     t = (boundaryMaxX - point.x) / normal.x;
+    yVal = (point.y + normal.y * t);
 
-    if ((point.y + normal.y * t) >= boundaryMinY && (point.y + normal.y * t) <= boundaryMaxY)
+    // y_min < y <= y_max
+    if (compareDoubleEqual(yVal, boundaryMaxY) || (yVal >= boundaryMinY && yVal <= boundaryMaxY))
     {
-      /* create edge */
+      tmpPoint = new PointDouble(boundaryMaxX, yVal);
+      tmpEdge = findBoundingSegment(*tmpPoint, corners::top_right, geo::axis::vertical, geo::order::descending);
+      if (tmpEdge == nullptr)
+      {
+        std::cerr << "Calculations failed\n";
+        exit(-1);
+      }
+      else
+      {
+        if (compareDoublePointEqual(*tmpEdge->from(), *tmpPoint))
+        {
+          delete tmpPoint;
+          pointsOnBoundary.push_back({t, tmpEdge});
+        }
+        else
+        {
+          diagramVertices.push_back(tmpPoint);
+          geo::insertPointInEdge(tmpPoint, tmpEdge);
+          pointsOnBoundary.push_back({t, tmpEdge->next()});
+        }
+      }
     }
+  }
+
+  if (pointsOnBoundary.size() != 2)
+  {
+    std::cerr << "Calculations failed\n";
+    exit(-1);
+  }
+
+  HalfEdge<double> *newEdge;
+  auto newFace = geo::insertDiagonal(pointsOnBoundary[0].edge, pointsOnBoundary[1].edge, &newEdge);
+  diagramFaces.push_back(newFace);
+
+  if (pointsOnBoundary[0].t > pointsOnBoundary[1].t)
+  {
+    edgeReference[edge] = newEdge;
+    edgeReference[edge->twin()] = newEdge->twin();
+    return newEdge;
+  }
+  else
+  {
+    edgeReference[edge] = newEdge->twin();
+    edgeReference[edge->twin()] = newEdge;
+    return newEdge->twin();
   }
 }

@@ -15,13 +15,18 @@ template <typename T>
 class Face
 {
 public:
-  Face() : eC(nullptr) {}
+  Face() : eC(nullptr), id(-1) {}
 
   HalfEdge<T> *edgeChain() const { return eC; }
 
   void setChain(HalfEdge<T> *e)
   {
     eC = e;
+  }
+
+  void setId(int i)
+  {
+    id = i;
   }
 
   int getFaceSize()
@@ -36,10 +41,12 @@ public:
     } while (tmp != eC);
     return numPoints;
   }
+  int getId() const { return id; };
 
 public:
 private:
   HalfEdge<T> *eC;
+  int id;
 };
 
 #endif

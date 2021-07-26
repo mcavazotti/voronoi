@@ -9,7 +9,8 @@ int main()
   pointIntVector sites;
   readPoints(sites);
   Delaunay delaunay(sites);
-  // Voronoi vor(sites);
+  Voronoi vor(delaunay);
+  printVoronoi(vor);
 
   
   return 0;

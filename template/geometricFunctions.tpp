@@ -88,8 +88,16 @@ namespace geo
   template <typename T>
   Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge)
   {
+    HalfEdge<T> *tmp;
+    return insertDiagonal(fromEdge, toEdge, &tmp);
+  }
+
+  template <typename T>
+  Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge, HalfEdge<T> **newEdge)
+  {
     // Create diagonal and its twin
     auto diagonal = new HalfEdge<T>(toEdge->from(), fromEdge->from(), toEdge->prev(), fromEdge, nullptr);
+    *newEdge = diagonal;
     toEdge->from()->insertIncidentEdge(diagonal);
     auto diagonalTwin = new HalfEdge<T>(fromEdge->from(), toEdge->from(), fromEdge->prev(), toEdge, diagonal);
     fromEdge->from()->insertIncidentEdge(diagonalTwin);
@@ -179,10 +187,11 @@ namespace geo
   }
 
   template <typename T>
-  Point<T> computeNormal(HalfEdge<T> const &e)
+  Point<double> computeUnitaryNormal(HalfEdge<T> const &e)
   {
-    auto delta = *e.from() - *e.to();
-    return Point<T>(-delta.y, delta.x);
+    auto delta = PointDouble(*e.from() - *e.to());
+    auto magnitude = computeDistance<double>(delta, PointDouble(0, 0));
+    return Point<double>(-delta.y/magnitude, delta.x/magnitude);
   }
 }
 #endif
