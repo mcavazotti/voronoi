@@ -14,11 +14,13 @@ namespace geo
     auto edge = new HalfEdge<T>(from, to);
     from->insertIncidentEdge(edge);
 
-    auto twin = new HalfEdge<T>(to, from, nullptr, nullptr, edge);
+    auto twin = new HalfEdge<T>(to, from, edge, edge, edge);
     to->insertIncidentEdge(twin);
     twin->setFace(leftFace);
 
     edge->setTwin(twin);
+    edge->setPrev(twin);
+    edge->setNext(twin);
     edge->setFace(rightFace);
 
     return edge;

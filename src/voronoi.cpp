@@ -17,7 +17,7 @@ Voronoi::Voronoi(Delaunay const &del)
     minX = p->x < minX ? p->x : minX;
 
     maxY = p->y > maxY ? p->y : maxY;
-    minY = p->y < minY ? p->x : minY;
+    minY = p->y < minY ? p->y : minY;
     sites.push_back(p);
     sitesQueue.push(p);
   }
@@ -109,17 +109,18 @@ void Voronoi::buildDiagram(Delaunay const &del)
             newEdge = createSemiInfiniteEdge(e, false);
           else if (e->twin()->face() == nullptr)
             newEdge = createSemiInfiniteEdge(e->twin(), true);
-          /*else
-        {
-          if (triangleCircuncenters[e->face()] == triangleCircuncenters[e->twin()->face()])
-          {
-            processCoincidentCircuncenter(e);
-          }
           else
           {
+            // if (triangleCircuncenters[e->face()] == triangleCircuncenters[e->twin()->face()])
+            // {
+            // processCoincidentCircuncenter(e);
+            // createEdge(e);
+            // }
+            // else
+            // {
             createEdge(e);
+            // }
           }
-        }*/
         }
       }
     }
@@ -178,6 +179,11 @@ void Voronoi::prepareVoronoi()
 
   geo::setFace(firstEdge, face);
   diagramFaces.push_back(face);
+
+  for (auto &s : sites)
+  {
+    faceReference[s] = face;
+  }
 }
 
 HalfEdge<double> *Voronoi::findBoundingSegment(PointDouble const &p, corners corner, geo::axis axis, geo::order order)
@@ -378,12 +384,18 @@ HalfEdge<double> *Voronoi::createInfiniteEdge(HalfEdge<int> *edge)
   {
     edgeReference[edge] = newEdge;
     edgeReference[edge->twin()] = newEdge->twin();
+
+    faceReference[edge->from()] = newEdge->face();
+    faceReference[edge->to()] = newEdge->twin()->face();
     return newEdge;
   }
   else
   {
     edgeReference[edge] = newEdge->twin();
     edgeReference[edge->twin()] = newEdge;
+
+    faceReference[edge->from()] = newEdge->twin()->face();
+    faceReference[edge->to()] = newEdge->face();
     return newEdge->twin();
   }
 }
@@ -462,7 +474,7 @@ HalfEdge<double> *Voronoi::createSemiInfiniteEdge(HalfEdge<int> *edge, bool reve
     }
   }
 
-  if (!compareDoubleEqual(normal.y, 0.0))
+  if (!compareDoubleEqual(normal.x, 0.0))
   {
     // check against left boundary
     t = (boundaryMinX - point.x) / normal.x;
@@ -532,7 +544,8 @@ HalfEdge<double> *Voronoi::createSemiInfiniteEdge(HalfEdge<int> *edge, bool reve
   {
     oldFace = pointOnBoundary->face();
     neighboorEdge = edgeReference[neighboorEdgeInt];
-    newFace = geo::insertDiagonal(neighboorEdge->next(), pointOnBoundary, &newEdge, true);
+    tmpEdge = !reverse ? neighboorEdge->next() : neighboorEdge;
+    newFace = geo::insertDiagonal(tmpEdge, pointOnBoundary, &newEdge, true);
     // If the cell is open, then the old face was overwritten.
     if (newEdge->face() != oldFace)
     {
@@ -542,13 +555,80 @@ HalfEdge<double> *Voronoi::createSemiInfiniteEdge(HalfEdge<int> *edge, bool reve
     else
     {
       diagramFaces.push_back(newFace);
+      faceReference[edge->to()] = newEdge->face();
+      faceReference[edge->from()] = newEdge->twin()->face();
     }
-    newEdge= newEdge->twin();
+    newEdge = newEdge->twin();
   }
   else
   {
     auto circuncenter = triangleCircuncenters[edge->twin()->face()];
     newEdge = geo::createEdgeP2E(circuncenter, pointOnBoundary);
+  }
+
+  edgeReference[edge] = newEdge;
+  edgeReference[edge->twin()] = newEdge->twin();
+
+  return newEdge;
+}
+
+HalfEdge<double> *Voronoi::createEdge(HalfEdge<int> *edge)
+{
+  HalfEdge<int> *leftNeighboorInt, *rightNeighboorInt;
+  HalfEdge<double> *leftNeighboor, *rightNeighboor, *newEdge;
+  Face<double> *newFace, *oldFace;
+
+  leftNeighboorInt = edge->twin()->next();
+  if (edgeReference.count(leftNeighboorInt) > 0)
+    leftNeighboor = edgeReference[leftNeighboorInt];
+  else
+    leftNeighboor = nullptr;
+
+  rightNeighboorInt = edge->prev()->twin();
+  if (edgeReference.count(rightNeighboorInt) > 0)
+    rightNeighboor = edgeReference[rightNeighboorInt];
+  else
+    rightNeighboor = nullptr;
+
+  if (leftNeighboor != nullptr && rightNeighboor != nullptr)
+  {
+    oldFace = rightNeighboor->face();
+    newFace = geo::insertDiagonal(leftNeighboor->next(), rightNeighboor, &newEdge, true);
+
+    if (newEdge->face() != oldFace)
+    {
+      geo::setFace(newEdge, oldFace);
+      delete newFace;
+    }
+    else
+    {
+      faceReference[edge->to()] = newEdge->face();
+      faceReference[edge->from()] = newEdge->twin()->face();
+      diagramFaces.push_back(newFace);
+    }
+    newEdge = newEdge->twin();
+  }
+  else
+  {
+    auto circ1 = triangleCircuncenters[edge->twin()->face()];
+    auto circ2 = triangleCircuncenters[edge->face()];
+    if (leftNeighboor == nullptr && rightNeighboor == nullptr)
+    {
+      auto f = faceReference[edge->from()];
+      newEdge = geo::createEdgeP2P(circ1, circ2, f, f);
+    }
+    else
+    {
+      if (leftNeighboor == nullptr)
+      {
+        newEdge = geo::createEdgeP2E(circ1, rightNeighboor);
+      }
+      else
+      {
+        newEdge = geo::createEdgeP2E(circ2, leftNeighboor->next());
+        newEdge = newEdge->twin();
+      }
+    }
   }
 
   edgeReference[edge] = newEdge;

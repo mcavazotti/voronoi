@@ -30,7 +30,7 @@ private:
 
   HalfEdge<double> *createInfiniteEdge(HalfEdge<int> *edge);
   HalfEdge<double> *createSemiInfiniteEdge(HalfEdge<int> *edge, bool reverse);
-  // void createEdge(HalfEdge<int> *edge);
+  HalfEdge<double> *createEdge(HalfEdge<int> *edge);
   // void processCoincidentCircuncenter(HalfEdge<int> *edge);
 
   /**
@@ -57,6 +57,7 @@ private:
   std::map<Face<int> *, Point<double> *> triangleCircuncenters;
   std::map<HalfEdge<int> *, HalfEdge<double> *> edgeReference;
   std::map<Face<double> *, PointInt *> siteFaceReference;
+  std::map<PointInt *, Face<double> *> faceReference;
 };
 
 #endif
