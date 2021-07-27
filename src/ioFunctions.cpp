@@ -96,8 +96,11 @@ void printVoronoi(Voronoi const &vor)
   }
   for (auto &f : vor.diagramFaces)
   {
-    f->setId(++faceCount);
-    facesVector.push_back(f);
+    if (vor.siteFaceReference.count(f) > 0)
+    {
+      f->setId(++faceCount);
+      facesVector.push_back(f);
+    }
   }
 
   std::sort(pointsVector.begin(), pointsVector.end(), _sortPointsById);
