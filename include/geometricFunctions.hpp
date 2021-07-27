@@ -28,7 +28,8 @@ namespace geo
   /**
  *  Create an edge, from a point to ("2") a half-edge.
  * 
- * It doesn't set the faces.
+ * The dangling side go over itself (edge->twin()->next() = edge) .It doesn't set the faces.
+ * 
  */
   template <typename T>
   HalfEdge<T> *createEdgeP2E(Point<T> *from, HalfEdge<T> *toEdge);
@@ -51,7 +52,7 @@ namespace geo
   Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge);
   
   template <typename T>
-  Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge, HalfEdge<T> **newEdge);
+  Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge, HalfEdge<T> **newEdge, bool computeFace);
 
   template <typename T>
   void legalizeEdge(Point<T> *p, HalfEdge<T> *edge);

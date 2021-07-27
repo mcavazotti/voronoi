@@ -29,10 +29,13 @@ namespace geo
   {
     auto edge = new HalfEdge<T>(from, toEdge->from(), nullptr, toEdge, nullptr);
     from->insertIncidentEdge(edge);
+    edge->setFace(toEdge->face());
 
-    auto twin = new HalfEdge<T>(toEdge->from(), from, toEdge->prev(), nullptr, edge);
+    auto twin = new HalfEdge<T>(toEdge->from(), from, toEdge->prev(), edge, edge);
     toEdge->from()->insertIncidentEdge(twin);
     edge->setTwin(twin);
+    edge->setPrev(twin);
+    twin->setFace(toEdge->face());
 
     toEdge->prev()->setNext(twin);
     toEdge->setPrev(edge);
@@ -89,11 +92,11 @@ namespace geo
   Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge)
   {
     HalfEdge<T> *tmp;
-    return insertDiagonal(fromEdge, toEdge, &tmp);
+    return insertDiagonal(fromEdge, toEdge, &tmp, true);
   }
 
   template <typename T>
-  Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge, HalfEdge<T> **newEdge)
+  Face<T> *insertDiagonal(HalfEdge<T> *fromEdge, HalfEdge<T> *toEdge, HalfEdge<T> **newEdge, bool computeFace)
   {
     // Create diagonal and its twin
     auto diagonal = new HalfEdge<T>(toEdge->from(), fromEdge->from(), toEdge->prev(), fromEdge, nullptr);
@@ -110,11 +113,15 @@ namespace geo
     toEdge->setPrev(diagonalTwin);
     fromEdge->setPrev(diagonal);
 
-    auto face = new Face<T>();
+    Face<T> *face = nullptr;
+    if (computeFace)
+    {
+      face = new Face<T>();
 
-    // Update face
-    setFace(diagonal, fromEdge->face());
-    setFace(diagonalTwin, face);
+      // Update face
+      setFace(diagonal, fromEdge->face());
+      setFace(diagonalTwin, face);
+    }
 
     return face;
   }
@@ -191,7 +198,7 @@ namespace geo
   {
     auto delta = PointDouble(*e.from() - *e.to());
     auto magnitude = computeDistance<double>(delta, PointDouble(0, 0));
-    return Point<double>(-delta.y/magnitude, delta.x/magnitude);
+    return Point<double>(-delta.y / magnitude, delta.x / magnitude);
   }
 }
 #endif

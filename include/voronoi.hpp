@@ -29,9 +29,9 @@ private:
   void buildDiagram(Delaunay const &del);
 
   HalfEdge<double> *createInfiniteEdge(HalfEdge<int> *edge);
-  /*void createSemiInfiniteEdge(HalfEdge<int> *edge);
-  void createEdge(HalfEdge<int> *edge);
-  void processCoincidentCircuncenter(HalfEdge<int> *edge);*/
+  HalfEdge<double> *createSemiInfiniteEdge(HalfEdge<int> *edge, bool reverse);
+  // void createEdge(HalfEdge<int> *edge);
+  // void processCoincidentCircuncenter(HalfEdge<int> *edge);
 
   /**
    * Find corresponding half-edge in the boundary that contains given point.
